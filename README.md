@@ -29,8 +29,12 @@ Install the local toolchain once per clone:
 npm install
 ```
 
-This installs the Angular CLI as a project-level dev dependency so every contributor uses the same version (`npm run ng -- --version` to confirm). Use `npm run ng -- <command>` whenever Angular CLI commands are needed.
+This installs the Angular CLI as a project-level dev dependency so every contributor uses the same version (`npx ng version` to confirm). Use `npx ng <command>` from the repo root to scaffold or maintain the Angular workspace.
 
 ## Frontend Setup
 
 See `frontend/README.md` for the Angular CLI scaffolding steps executed via the local CLI.
+
+### VS Code Tasks
+
+- Run the Angular dev server with `Terminal → Run Task… → Frontend: ng serve`. The task shells out to `npm run start --prefix frontend`, so scaffold the Angular project first (it adds the `start` script).
