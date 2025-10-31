@@ -21,6 +21,25 @@ uvicorn app.main:app --reload
 
 The server exposes a `/health` endpoint while the game APIs are still under construction.
 
+### Available API Routes
+
+- `GET /collections` — enumerate playable collections, including description text and icon URL.
+- `GET /collections/{collectionId}/images` — return metadata and URLs for each image in a collection.
+- `GET /collections/{collectionId}/images/{filename}` — serve the requested asset.
+
+Each collection lives under `backend/collections/<collectionId>`. Provide optional metadata via `description.json`:
+
+```json
+{
+  "title": "TUX",
+  "description": "A collection of Linux penguins.",
+  "source": "https://example.com",
+  "icon": "Linux-Pinguino.svg"
+}
+```
+
+Markdown descriptions (`description.md`) are still supported and used when no JSON file exists.
+
 ## Node Tooling
 
 Install the local toolchain once per clone:
