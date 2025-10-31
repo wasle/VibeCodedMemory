@@ -1,0 +1,20 @@
+The goal is to implement a web based Memory game. The game where you have hidden cards and you have to find allways identical pairs.
+
+Technical Details
+The Impelementation sould be in Typescript using angular framework.
+All Code is versioned in a git Repository
+Server side components are written in python using fastapi 
+
+Features
+ * Basic Memory Game wehere the user has to find allways two identical pairs
+ * The sets of images com from an local folder Basic versioned or can be fachted from google image search.
+ * Advanced Matching (only for local libraries) allow using the game using matching items. Where the two items are only grouped togeather but not identically.
+ * Adjustible Size of the game Board. 
+   * The game board size is limited by the number of elements in the dataset.
+   * if the gameboard is smaller than the dataset a random subselection is used
+   * Advanced Feature: Join multible datasets for a biger board.
+ * The Initial Implementaion of the game is single player
+ * The Game count the number of tries the user has made.
+ * Advanced Counting. The Game remembers which parts of the playfiled where already shown. Any only counts the errors where the user could have known the the correct card to open
+
+ 
