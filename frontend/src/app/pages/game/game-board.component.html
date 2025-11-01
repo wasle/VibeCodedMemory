@@ -1,0 +1,59 @@
+<div class="game-container">
+  <header class="game-header">
+    <div class="game-header__info">
+      <h1>{{ collectionTitle() || 'Memory Match' }}</h1>
+      <p>
+        Pairs found:
+        {{ matchedPairs() }} / {{ pairsToFind() }}
+      </p>
+    </div>
+    <div class="game-header__actions">
+      <div class="attempts">Attempts: {{ attempts() }}</div>
+      <button type="button" (click)="startNewGame()">New game</button>
+    </div>
+  </header>
+
+  <section *ngIf="loading()" class="status-panel">
+    <p>Preparing the board…</p>
+  </section>
+
+  <section *ngIf="!loading() && error()" class="status-panel status-panel--error">
+    <p>{{ error() }}</p>
+    <button type="button" (click)="startNewGame()">Back to start</button>
+  </section>
+
+  <ng-container *ngIf="!loading() && !error()">
+    <div
+      class="board"
+      [style.gridTemplateColumns]="'repeat(' + columns + ', minmax(0, 1fr))'"
+    >
+      <button
+        type="button"
+        *ngFor="let tile of tiles(); trackBy: tileTrackBy"
+        class="tile"
+        [class.tile--hidden]="tile.state === 'hidden'"
+        [class.tile--visible]="tile.state === 'visible'"
+        [class.tile--matched]="tile.state === 'matched'"
+        (click)="onTileSelected(tile.id)"
+        [disabled]="tile.state === 'matched'"
+      >
+        <ng-container *ngIf="isRevealed(tile); else hiddenTile">
+          <img
+            [src]="tile.image.url"
+            [alt]="tile.image.filename"
+            loading="lazy"
+          />
+        </ng-container>
+        <ng-template #hiddenTile>
+          <span class="hidden-mark" aria-hidden="true">?</span>
+        </ng-template>
+      </button>
+    </div>
+
+    <div *ngIf="allPairsFound()" class="game-complete">
+      <h2>Congratulations!</h2>
+      <p>You found all pairs in {{ attempts() }} {{ attempts() === 1 ? 'attempt' : 'attempts' }}.</p>
+      <button type="button" (click)="startNewGame()">Play again</button>
+    </div>
+  </ng-container>
+</div>

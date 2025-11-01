@@ -1,0 +1,96 @@
+<div class="start-container">
+  <header class="page-header">
+    <div>
+      <h1>Memory Match</h1>
+      <p>Select a collection and how many pairs you want to play.</p>
+    </div>
+    <button
+      type="button"
+      class="retry-button"
+      *ngIf="error() && !loading()"
+      (click)="retry()"
+    >
+      Retry
+    </button>
+  </header>
+
+  <section *ngIf="loading()" class="status-message">
+    <p>Loading collections…</p>
+  </section>
+
+  <section *ngIf="!loading() && error()" class="status-message status-message--error">
+    <p>{{ error() }}</p>
+    <button type="button" (click)="retry()">Try again</button>
+  </section>
+
+  <section *ngIf="!loading() && !error()" class="collections-section">
+    <h2>Collections</h2>
+    <ul class="collection-list">
+      <li
+        *ngFor="let collection of collections(); trackBy: trackByCollectionId"
+        class="collection-item"
+      >
+        <button
+          type="button"
+          class="collection-card"
+          [class.collection-card--active]="selectedCollection()?.id === collection.id"
+          (click)="selectCollection(collection)"
+        >
+          <div class="collection-card__media" *ngIf="collection.icon_url; else placeholderIcon">
+            <img [src]="collection.icon_url!" [alt]="collection.title + ' icon'" />
+          </div>
+          <ng-template #placeholderIcon>
+            <div class="collection-card__placeholder" aria-hidden="true">
+              {{ collection.title | slice: 0:1 }}
+            </div>
+          </ng-template>
+          <div class="collection-card__details">
+            <h3>{{ collection.title }}</h3>
+            <p *ngIf="collection.description as description">{{ description }}</p>
+            <p class="collection-card__count">
+              {{ collection.image_count }} {{ collection.image_count === 1 ? 'image' : 'images' }}
+            </p>
+          </div>
+        </button>
+      </li>
+    </ul>
+  </section>
+
+  <section *ngIf="selectedCollection()" class="game-options">
+    <h2>Game setup</h2>
+    <p *ngIf="(selectedCollection()?.image_count ?? 0) < 2" class="game-options__warning">
+      This collection needs at least two images to play.
+    </p>
+    <div class="pairs-control" *ngIf="(selectedCollection()?.image_count ?? 0) >= 2">
+      <label class="pairs-control__label" for="pair-count">Number of pairs</label>
+      <div class="pairs-control__inputs">
+        <button type="button" (click)="increasePairs(-1)" aria-label="Decrease pairs">
+          &minus;
+        </button>
+        <input
+          id="pair-count"
+          type="number"
+          [value]="selectedPairs() ?? 2"
+          (input)="onPairsChange($event)"
+          [min]="2"
+          [max]="selectedCollection()?.image_count ?? 2"
+        />
+        <button type="button" (click)="increasePairs(1)" aria-label="Increase pairs">
+          +
+        </button>
+      </div>
+      <p class="pairs-control__hint">
+        Maximum pairs for this collection: {{ selectedCollection()?.image_count }}
+      </p>
+    </div>
+    <button
+      type="button"
+      class="start-button"
+      [disabled]="!canStart()"
+      (click)="startGame()"
+    >
+      Start game with {{ selectedPairs() ?? 0 }}
+      {{ (selectedPairs() ?? 0) === 1 ? 'pair' : 'pairs' }}
+    </button>
+  </section>
+</div>

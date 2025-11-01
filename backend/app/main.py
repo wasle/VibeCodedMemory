@@ -6,10 +6,24 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 app = FastAPI(title="Memory Game API", version="0.2.0")
+
+ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 COLLECTION_EXTENSIONS: tuple[str, ...] = (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp")
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
