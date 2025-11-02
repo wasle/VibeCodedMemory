@@ -57,3 +57,26 @@ See `frontend/README.md` for the Angular CLI scaffolding steps executed via the 
 ### VS Code Tasks
 
 - Run the Angular dev server with `Terminal → Run Task… → Frontend: ng serve`. The task shells out to `npm run start --prefix frontend`, so scaffold the Angular project first (it adds the `start` script).
+
+## Local Docker Testing
+
+Build and run both services in containers for local verification:
+
+```bash
+chmod +x run_docker.sh  # once per clone
+./run_docker.sh
+```
+
+The script builds the backend (`vibecodedmemory-backend`) and frontend (`vibecodedmemory-frontend`) images, then launches both containers. Once the containers are up, the frontend is available at `http://localhost:8080` and the backend API at `http://localhost:8000`.
+
+Set `BACKEND_API_URL` before running the script to point the frontend at a different backend host:
+
+```bash
+BACKEND_API_URL="http://localhost:9000" ./run_docker.sh
+```
+
+To permit extra origins (for example when running behind Traefik) provide a comma-separated list via `ADDITIONAL_CORS_ORIGINS`:
+
+```bash
+ADDITIONAL_CORS_ORIGINS="https://game.example.com,https://admin.example.com" ./run_docker.sh
+```

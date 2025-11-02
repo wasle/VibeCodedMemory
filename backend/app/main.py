@@ -4,6 +4,7 @@ import json
 import mimetypes
 from dataclasses import dataclass
 from pathlib import Path
+import os
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,14 +13,17 @@ from pydantic import BaseModel
 
 app = FastAPI(title="Memory Game API", version="0.2.0")
 
-ALLOWED_ORIGINS = [
-    "http://localhost:4200",
-    "http://127.0.0.1:4200",
+ALLOWED_ORIGINS_REGEX = r"http://(localhost|127\.0\.0\.1)(:\d+)?"
+ADDITIONAL_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("ADDITIONAL_CORS_ORIGINS", "").split(",")
+    if origin.strip()
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=ADDITIONAL_ALLOWED_ORIGINS or [],
+    allow_origin_regex=ALLOWED_ORIGINS_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
