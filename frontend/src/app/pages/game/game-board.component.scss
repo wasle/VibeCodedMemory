@@ -32,6 +32,14 @@
     align-items: center;
     gap: 1rem;
 
+    .elapsed {
+      font-weight: 600;
+      padding: 0.5rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(0, 102, 204, 0.12);
+      color: #0b5394;
+    }
+
     .attempts {
       font-weight: 600;
       padding: 0.5rem 0.75rem;

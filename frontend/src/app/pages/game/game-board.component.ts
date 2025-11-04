@@ -47,11 +47,15 @@ export class GameBoardComponent implements AfterViewInit {
   protected readonly boardStyle = signal<Record<string, string>>({
     gap: '16px'
   });
+  protected readonly elapsedSeconds = signal(0);
 
   private readonly baseGapPx = 16;
   private readonly minGapPx = 8;
   private readonly maxGapPx = 24;
   private readonly minTileSizePx = 32;
+  private timerInterval: number | null = null;
+  private gameStartedAt: number | null = null;
+  private accumulatedSeconds = 0;
 
   protected readonly matchedPairs = computed(
     () => this.tiles().filter((tile) => tile.state === 'matched').length / 2
@@ -70,8 +74,13 @@ export class GameBoardComponent implements AfterViewInit {
     return Math.ceil(tileCount / columnCount);
   });
 
+  protected readonly formattedElapsedTime = computed(() => this.formatElapsed(this.elapsedSeconds()));
+
   constructor() {
-    this.destroyRef.onDestroy(() => this.clearPendingState());
+    this.destroyRef.onDestroy(() => {
+      this.clearPendingState();
+      this.stopTimer();
+    });
 
     effect(() => {
       const columnCount = this.columns();
@@ -82,6 +91,12 @@ export class GameBoardComponent implements AfterViewInit {
       }
 
       this.scheduleBoardLayout();
+    });
+
+    effect(() => {
+      if (this.allPairsFound()) {
+        this.stopTimer();
+      }
     });
 
     const collectionId = this.route.snapshot.paramMap.get('collectionId');
@@ -106,6 +121,7 @@ export class GameBoardComponent implements AfterViewInit {
   }
 
   protected startNewGame(): void {
+    this.stopTimer();
     this.router.navigate(['/']);
   }
 
@@ -125,6 +141,8 @@ export class GameBoardComponent implements AfterViewInit {
       this.hideMismatchedTiles();
     }
 
+    this.startTimer();
+
     this.setTileState(tileId, 'visible');
     this.revealedTileIds.push(tileId);
 
@@ -136,6 +154,65 @@ export class GameBoardComponent implements AfterViewInit {
 
   protected isRevealed(tile: GameTile): boolean {
     return tile.state === 'visible' || tile.state === 'matched';
+  }
+
+  private startTimer(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (this.timerInterval !== null) {
+      return;
+    }
+
+    if (this.gameStartedAt === null) {
+      this.gameStartedAt = Date.now();
+    }
+
+    this.elapsedSeconds.set(this.accumulatedSeconds);
+
+    this.timerInterval = window.setInterval(() => {
+      if (this.gameStartedAt === null) {
+        return;
+      }
+      const elapsed = Math.floor((Date.now() - this.gameStartedAt) / 1000) + this.accumulatedSeconds;
+      this.elapsedSeconds.set(elapsed);
+    }, 1000);
+  }
+
+  private stopTimer(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (this.timerInterval !== null) {
+      window.clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+
+    if (this.gameStartedAt !== null) {
+      const elapsed = Math.floor((Date.now() - this.gameStartedAt) / 1000);
+      this.accumulatedSeconds += elapsed;
+      this.elapsedSeconds.set(this.accumulatedSeconds);
+      this.gameStartedAt = null;
+    }
+  }
+
+  private resetTimer(): void {
+    this.stopTimer();
+    this.accumulatedSeconds = 0;
+    this.elapsedSeconds.set(0);
+  }
+
+  private formatElapsed(totalSeconds: number): string {
+    const safeSeconds = Math.max(0, totalSeconds);
+    const minutes = Math.floor(safeSeconds / 60);
+    const seconds = safeSeconds % 60;
+    return `${this.padNumber(minutes)}:${this.padNumber(seconds)}`;
+  }
+
+  private padNumber(value: number): string {
+    return value.toString().padStart(2, '0');
   }
 
   private scheduleBoardLayout(): void {
@@ -305,6 +382,7 @@ export class GameBoardComponent implements AfterViewInit {
     this.tiles.set(tiles);
     this.attempts.set(0);
     this.loading.set(false);
+    this.resetTimer();
     this.scheduleBoardLayout();
   }
 

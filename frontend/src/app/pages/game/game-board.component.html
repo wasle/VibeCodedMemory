@@ -8,6 +8,7 @@
       </p>
     </div>
     <div class="game-header__actions">
+      <div class="elapsed">Time: {{ formattedElapsedTime() }}</div>
       <div class="attempts">Attempts: {{ attempts() }}</div>
       <button type="button" (click)="startNewGame()">New game</button>
     </div>
@@ -23,6 +24,15 @@
   </section>
 
   <ng-container *ngIf="!loading() && !error()">
+    <div *ngIf="allPairsFound()" class="game-complete">
+      <h2>Congratulations!</h2>
+      <p>
+        You found all pairs in {{ attempts() }} {{ attempts() === 1 ? 'attempt' : 'attempts' }}
+        and {{ formattedElapsedTime() }}.
+      </p>
+      <button type="button" (click)="startNewGame()">Play again</button>
+    </div>
+
     <div
       #boardContainer
       class="board"
@@ -49,12 +59,6 @@
           <span class="hidden-mark" aria-hidden="true">?</span>
         </ng-template>
       </button>
-    </div>
-
-    <div *ngIf="allPairsFound()" class="game-complete">
-      <h2>Congratulations!</h2>
-      <p>You found all pairs in {{ attempts() }} {{ attempts() === 1 ? 'attempt' : 'attempts' }}.</p>
-      <button type="button" (click)="startNewGame()">Play again</button>
     </div>
   </ng-container>
 </div>
