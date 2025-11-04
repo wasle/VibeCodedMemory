@@ -16,7 +16,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CollectionsService } from '../../services/collections.service';
 import { GAME_CONFIG } from '../../config/game-config';
-import { GameTile, ImageAsset, TileState } from '../../models/types';
+import { CardPair, GameTile, TileState } from '../../models/types';
 import { GameTileComponent } from './game-tile.component';
 
 @Component({
@@ -324,14 +324,14 @@ export class GameBoardComponent implements AfterViewInit {
           }
           this.collectionTitle.set(collection.title);
           this.collectionsService
-            .listCollectionImages(collectionId)
+            .listCollectionPairs(collectionId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-              next: (images) => {
-                this.setupGame(images, requestedPairs, requestedColumns);
+              next: (pairs) => {
+                this.setupGame(pairs, requestedPairs, requestedColumns);
               },
               error: () => {
-                this.error.set('Unable to load collection images.');
+                this.error.set('Unable to load collection pairs.');
                 this.loading.set(false);
               }
             });
@@ -344,14 +344,14 @@ export class GameBoardComponent implements AfterViewInit {
   }
 
   private setupGame(
-    images: ImageAsset[],
+    pairsData: CardPair[],
     requestedPairs: number,
     requestedColumns: number | null
   ): void {
-    const availablePairs = images.length;
+    const availablePairs = pairsData.length;
 
     if (availablePairs < 2) {
-      this.error.set('This collection does not have enough images to play.');
+      this.error.set('This collection does not have enough pairs to play.');
       this.loading.set(false);
       return;
     }
@@ -359,7 +359,7 @@ export class GameBoardComponent implements AfterViewInit {
     const pairs = Math.min(requestedPairs, availablePairs);
     this.pairsToFind.set(pairs);
 
-    const selectedImages = this.shuffle(images.slice()).slice(0, pairs);
+    const selectedPairs = this.shuffle(pairsData.slice()).slice(0, pairs);
     this.tileIdCounter = 0;
     const totalTiles = pairs * 2;
     const columns = this.clampColumns(
@@ -369,10 +369,13 @@ export class GameBoardComponent implements AfterViewInit {
     this.columns.set(columns);
 
     const tiles = this.shuffle(
-      selectedImages.flatMap((image) => [
-        this.createTile(image),
-        this.createTile(image)
-      ])
+      selectedPairs.flatMap((pair, index) => {
+        const matchKey = `pair-${index}`;
+        return [
+          this.createTile(pair.cards[0], matchKey),
+          this.createTile(pair.cards[1], matchKey)
+        ];
+      })
     );
 
     this.clearPendingState();
@@ -394,7 +397,7 @@ export class GameBoardComponent implements AfterViewInit {
       return;
     }
 
-    if (firstTile.image.filename === secondTile.image.filename) {
+    if (firstTile.matchKey === secondTile.matchKey) {
       this.setTileState(firstId, 'matched');
       this.setTileState(secondId, 'matched');
       this.revealedTileIds = [];
@@ -434,11 +437,12 @@ export class GameBoardComponent implements AfterViewInit {
     );
   }
 
-  private createTile(image: ImageAsset): GameTile {
+  private createTile(card: CardPair['cards'][number], matchKey: string): GameTile {
     this.tileIdCounter += 1;
     return {
       id: this.tileIdCounter,
-      image,
+      card,
+      matchKey,
       state: 'hidden'
     };
   }

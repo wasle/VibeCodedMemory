@@ -36,7 +36,7 @@ export class StartGameComponent {
     const collection = this.selectedCollection();
     const pairs = this.selectedPairs();
     const columns = this.selectedColumns();
-    return !!collection && collection.image_count >= 2 && !!pairs && !!columns;
+    return !!collection && collection.pair_count >= 2 && !!pairs && !!columns;
   });
 
   protected readonly totalTiles = computed(() => {
@@ -75,7 +75,7 @@ export class StartGameComponent {
   protected selectCollection(collection: CollectionSummary): void {
     const previousSelection = this.selectedCollection();
     this.selectedCollection.set(collection);
-    if (collection.image_count < 2) {
+    if (collection.pair_count < 2) {
       this.selectedPairs.set(null);
       this.selectedColumns.set(null);
       return;
@@ -83,8 +83,8 @@ export class StartGameComponent {
     const currentPairs =
       previousSelection?.id === collection.id && this.selectedPairs() !== null
         ? this.selectedPairs()!
-        : this.defaultPairs(collection.image_count);
-    const pairs = this.clampPairs(currentPairs, collection.image_count);
+        : this.defaultPairs(collection.pair_count);
+    const pairs = this.clampPairs(currentPairs, collection.pair_count);
     this.selectedPairs.set(pairs);
     if (!previousSelection || previousSelection.id !== collection.id) {
       this.selectedColumns.set(null);
@@ -108,7 +108,7 @@ export class StartGameComponent {
       return;
     }
 
-    const pairs = this.clampPairs(numericValue, collection.image_count);
+    const pairs = this.clampPairs(numericValue, collection.pair_count);
     this.selectedPairs.set(pairs);
     this.ensureColumnsAreValid(pairs);
   }
@@ -120,7 +120,7 @@ export class StartGameComponent {
     }
 
     const current = this.selectedPairs() ?? 2;
-    const pairs = this.clampPairs(current + step, collection.image_count);
+    const pairs = this.clampPairs(current + step, collection.pair_count);
     this.selectedPairs.set(pairs);
     this.ensureColumnsAreValid(pairs);
   }
@@ -191,7 +191,7 @@ export class StartGameComponent {
           this.loading.set(false);
           if (payload.length > 0 && !this.selectedCollection()) {
             const firstPlayable =
-              payload.find((item) => item.image_count >= 2) ?? payload[0];
+              payload.find((item) => item.pair_count >= 2) ?? payload[0];
             this.selectCollection(firstPlayable);
           }
         },

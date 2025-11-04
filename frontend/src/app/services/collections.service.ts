@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { CollectionSummary, ImageAsset } from '../models/types';
+import { CardPair, CollectionSummary } from '../models/types';
 import { GAME_CONFIG } from '../config/game-config';
 
 @Injectable({
@@ -16,8 +16,8 @@ export class CollectionsService {
     return this.http.get<CollectionSummary[]>(`${this.baseUrl}/collections`);
   }
 
-  listCollectionImages(collectionId: string): Observable<ImageAsset[]> {
+  listCollectionPairs(collectionId: string): Observable<CardPair[]> {
     const safeId = encodeURIComponent(collectionId);
-    return this.http.get<ImageAsset[]>(`${this.baseUrl}/collections/${safeId}/images`);
+    return this.http.get<CardPair[]>(`${this.baseUrl}/collections/${safeId}/pairs`);
   }
 }

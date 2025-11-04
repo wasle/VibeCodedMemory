@@ -10,11 +10,25 @@
   (click)="handleSelect()"
 >
   <ng-container *ngIf="isRevealed; else hiddenTile">
-    <img
-      [src]="tile.image.url"
-      [alt]="tile.image.filename"
-      loading="lazy"
-    />
+    <ng-container [ngSwitch]="cardKind">
+      <img
+        *ngSwitchCase="'image'"
+        [src]="imageUrl || ''"
+        [alt]="imageAlt || ''"
+        loading="lazy"
+      />
+      <div
+        *ngSwitchCase="'markdown'"
+        class="tile__markdown"
+        [innerHTML]="markdownContent"
+      ></div>
+      <div
+        *ngSwitchDefault
+        class="tile__unsupported"
+      >
+        Unsupported card content
+      </div>
+    </ng-container>
   </ng-container>
   <ng-template #hiddenTile>
     <span class="hidden-mark" aria-hidden="true">?</span>

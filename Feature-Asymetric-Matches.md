@@ -2,8 +2,8 @@ We want to implement a feature which allos non identical paris to be matched.
 So a Match can consist of two different items. Which are defined to be matching.
 
 Steps to go there.
-1. Extract the cards into its own component.
-2. Extend the backend to allow for Text baed cards. 
+1. Extract the cards into its own component.(done)
+2. Extend the backend to allow for Text baed cards. (done)
    This means a card can now be either an image or an markdown formated string.
    For this the description.json file inside the collections sould get a new paramether. "Pairs".
    Each pair consits of two elementes. Each alement can be either a link to an image or an text.
@@ -22,7 +22,7 @@ Steps to go there.
     }
 
    If Pairs is not Present in the desciption.json the backand soloud creat is by listing the directory as it currently does of find the images.
-3. Create a new collection named Hallow World.
+3. Create a new collection named Hallow World. (done)
    search for the 16 most common programming languages.
    Each pair consists of the name of the Programming language and a hallow world programm in this language.
-4. Add support to the frontent to be able to render markdown based Cards.
+4. Add support to the frontent to be able to render markdown based Cards. (done)

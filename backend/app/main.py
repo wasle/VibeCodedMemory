@@ -5,11 +5,12 @@ import mimetypes
 from dataclasses import dataclass
 from pathlib import Path
 import os
+from typing import Annotated, Literal, Tuple, Union
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 app = FastAPI(title="Memory Game API", version="0.2.0")
 
@@ -39,14 +40,28 @@ class CollectionSummary(BaseModel):
     title: str
     description: str | None
     icon_url: str | None
-    images_url: str
+    pairs_url: str
     image_count: int
+    pair_count: int
     source: str | None = None
 
 
-class ImageAsset(BaseModel):
+class CardImage(BaseModel):
+    kind: Literal["image"] = "image"
     filename: str
     url: str
+
+
+class CardMarkdown(BaseModel):
+    kind: Literal["markdown"] = "markdown"
+    content: str
+
+
+CardFace = Annotated[Union[CardImage, CardMarkdown], Field(discriminator="kind")]
+
+
+class CardPair(BaseModel):
+    cards: Tuple[CardFace, CardFace]
 
 
 @app.get("/health", tags=["system"])
@@ -65,12 +80,12 @@ async def list_collections(request: Request) -> list[CollectionSummary]:
         if not collection_dir.is_dir():
             continue
 
-        assets = list_collection_files(collection_dir)
-        if not assets:
-            # Skip empty collections because there is nothing to play with.
-            continue
-
         metadata = read_collection_metadata(collection_dir)
+        assets = list_collection_files(collection_dir)
+
+        if not assets and not metadata.pairs:
+            # Skip collections that have neither assets nor configured pairs.
+            continue
 
         icon_path: Path | None = None
         if metadata.icon:
@@ -85,7 +100,8 @@ async def list_collections(request: Request) -> list[CollectionSummary]:
             if icon_path
             else None
         )
-        images_url = str(request.url_for("list_collection_images", collection_id=collection_dir.name))
+        pairs_url = str(request.url_for("list_collection_pairs", collection_id=collection_dir.name))
+        pair_count = len(metadata.pairs) if metadata.pairs is not None else len(assets)
 
         summaries.append(
             CollectionSummary(
@@ -93,8 +109,9 @@ async def list_collections(request: Request) -> list[CollectionSummary]:
                 title=metadata.title,
                 description=metadata.description,
                 icon_url=icon_url,
-                images_url=images_url,
+                pairs_url=pairs_url,
                 image_count=len(assets),
+                pair_count=pair_count,
                 source=metadata.source,
             )
         )
@@ -103,25 +120,43 @@ async def list_collections(request: Request) -> list[CollectionSummary]:
 
 
 @app.get(
-    "/collections/{collection_id}/images",
-    response_model=list[ImageAsset],
+    "/collections/{collection_id}/pairs",
+    response_model=list[CardPair],
     tags=["collections"],
-    name="list_collection_images",
+    name="list_collection_pairs",
 )
-async def list_collection_images(collection_id: str, request: Request) -> list[ImageAsset]:
-    """Return metadata for all assets inside a collection."""
+async def list_collection_pairs(collection_id: str, request: Request) -> list[CardPair]:
+    """Return the configured pairs for a collection, supporting image and markdown cards."""
     collection_dir = resolve_collection_dir(collection_id)
-    assets = list_collection_files(collection_dir)
+    metadata = read_collection_metadata(collection_dir)
 
-    if not assets:
-        raise HTTPException(status_code=404, detail="Collection contains no playable assets.")
+    pair_definitions: list[PairDefinition]
+
+    if metadata.pairs is not None:
+        pair_definitions = metadata.pairs
+    else:
+        assets = list_collection_files(collection_dir)
+        if not assets:
+            raise HTTPException(status_code=404, detail="Collection contains no playable assets.")
+        pair_definitions = [
+            PairDefinition(
+                first=CardDefinition(kind="image", value=asset.name),
+                second=CardDefinition(kind="image", value=asset.name),
+            )
+            for asset in assets
+        ]
+
+    if not pair_definitions:
+        raise HTTPException(status_code=404, detail="Collection contains no playable pairs.")
 
     return [
-        ImageAsset(
-            filename=asset.name,
-            url=str(request.url_for("get_collection_asset", collection_id=collection_id, filename=asset.name)),
+        CardPair(
+            cards=(
+                _card_definition_to_model(pair.first, collection_id, request),
+                _card_definition_to_model(pair.second, collection_id, request),
+            )
         )
-        for asset in assets
+        for pair in pair_definitions
     ]
 
 
@@ -167,11 +202,33 @@ def list_collection_files(collection_dir: Path) -> list[Path]:
 
 
 @dataclass
+class CardDefinition:
+    kind: Literal["image", "markdown"]
+    value: str
+
+
+@dataclass
+class PairDefinition:
+    first: CardDefinition
+    second: CardDefinition
+
+
+@dataclass
 class CollectionMetadata:
     title: str
     description: str | None = None
     icon: str | None = None
     source: str | None = None
+    pairs: list[PairDefinition] | None = None
+
+
+def _card_definition_to_model(definition: CardDefinition, collection_id: str, request: Request) -> CardFace:
+    if definition.kind == "image":
+        url = str(request.url_for("get_collection_asset", collection_id=collection_id, filename=definition.value))
+        return CardImage(filename=definition.value, url=url)
+    if definition.kind == "markdown":
+        return CardMarkdown(content=definition.value)
+    raise HTTPException(status_code=500, detail=f"Unsupported card kind '{definition.kind}'.")
 
 
 def read_collection_metadata(collection_dir: Path) -> CollectionMetadata:
@@ -190,6 +247,9 @@ def read_collection_metadata(collection_dir: Path) -> CollectionMetadata:
         metadata.description = _extract_field(data, ("description", "Description", "Description:"))
         metadata.icon = _extract_field(data, ("icon", "Icon", "Icon:"))
         metadata.source = _extract_field(data, ("source", "Source", "Source:"))
+        pairs_raw = _extract_pairs(data)
+        if pairs_raw is not None:
+            metadata.pairs = _parse_pairs(pairs_raw, collection_dir)
         return metadata
 
     description_md = collection_dir / "description.md"
@@ -206,3 +266,68 @@ def _extract_field(data: dict[str, object], keys: tuple[str, ...]) -> str | None
             if value:
                 return value
     return None
+
+
+def _extract_pairs(data: dict[str, object]) -> object | None:
+    for key in ("pairs", "Pairs", "Pairs:"):
+        if key in data:
+            return data[key]
+    return None
+
+
+def _parse_pairs(raw_pairs: object, collection_dir: Path) -> list[PairDefinition]:
+    if not isinstance(raw_pairs, list):
+        raise HTTPException(status_code=500, detail="Pairs must be defined as a list.")
+
+    parsed: list[PairDefinition] = []
+    for pair_index, raw_pair in enumerate(raw_pairs, start=1):
+        if not isinstance(raw_pair, list):
+            raise HTTPException(status_code=500, detail=f"Pair {pair_index} must be a list of card definitions.")
+
+        card_definitions: list[CardDefinition] = []
+        for item_index, raw_item in enumerate(raw_pair, start=1):
+            if not isinstance(raw_item, dict):
+                raise HTTPException(status_code=500, detail=f"Card {item_index} in pair {pair_index} must be an object.")
+
+            normalized = {str(key).strip().lower().rstrip(":"): raw_item[key] for key in raw_item}
+
+            if "image" in normalized:
+                filename = str(normalized["image"]).strip()
+                if not filename:
+                    raise HTTPException(status_code=500, detail=f"Card {item_index} in pair {pair_index} references an empty image filename.")
+                candidate = collection_dir / filename
+                if not candidate.is_file() or candidate.suffix.lower() not in COLLECTION_EXTENSIONS:
+                    raise HTTPException(status_code=500, detail=f"Image '{filename}' in pair {pair_index} was not found in the collection.")
+                card_definitions.append(CardDefinition(kind="image", value=filename))
+                continue
+
+            if "markdown" in normalized:
+                content = str(normalized["markdown"])
+                if not content.strip():
+                    raise HTTPException(status_code=500, detail=f"Markdown content in pair {pair_index} cannot be empty.")
+                card_definitions.append(CardDefinition(kind="markdown", value=content))
+                continue
+
+            if "text" in normalized:
+                content = str(normalized["text"])
+                if not content.strip():
+                    raise HTTPException(status_code=500, detail=f"Text content in pair {pair_index} cannot be empty.")
+                card_definitions.append(CardDefinition(kind="markdown", value=content))
+                continue
+
+            raise HTTPException(status_code=500, detail=f"Unsupported card definition in pair {pair_index}.")
+
+        if not card_definitions:
+            raise HTTPException(status_code=500, detail=f"Pair {pair_index} must define at least one card.")
+
+        if len(card_definitions) == 1:
+            single = card_definitions[0]
+            duplicate = CardDefinition(kind=single.kind, value=single.value)
+            card_definitions.append(duplicate)
+
+        if len(card_definitions) != 2:
+            raise HTTPException(status_code=500, detail=f"Pair {pair_index} must define exactly one or two cards.")
+
+        parsed.append(PairDefinition(first=card_definitions[0], second=card_definitions[1]))
+
+    return parsed
