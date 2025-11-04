@@ -3,20 +3,34 @@ export interface CollectionSummary {
   title: string;
   description: string | null;
   icon_url: string | null;
-  images_url: string;
+  pairs_url: string;
   image_count: number;
+  pair_count: number;
   source: string | null;
 }
 
-export interface ImageAsset {
+export type CardFace = ImageCard | MarkdownCard;
+
+export interface ImageCard {
+  kind: 'image';
   filename: string;
   url: string;
+}
+
+export interface MarkdownCard {
+  kind: 'markdown';
+  content: string;
+}
+
+export interface CardPair {
+  cards: [CardFace, CardFace];
 }
 
 export type TileState = 'hidden' | 'visible' | 'matched';
 
 export interface GameTile {
   id: number;
-  image: ImageAsset;
+  card: CardFace;
+  matchKey: string;
   state: TileState;
 }

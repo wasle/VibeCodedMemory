@@ -48,7 +48,7 @@
             <h3>{{ collection.title }}</h3>
             <p *ngIf="collection.description as description">{{ description }}</p>
             <p class="collection-card__count">
-              {{ collection.image_count }} {{ collection.image_count === 1 ? 'image' : 'images' }}
+              {{ collection.pair_count }} {{ collection.pair_count === 1 ? 'pair' : 'pairs' }}
             </p>
           </div>
         </button>
@@ -58,10 +58,10 @@
 
   <section *ngIf="selectedCollection()" class="game-options">
     <h2>Game setup</h2>
-    <p *ngIf="(selectedCollection()?.image_count ?? 0) < 2" class="game-options__warning">
-      This collection needs at least two images to play.
+    <p *ngIf="(selectedCollection()?.pair_count ?? 0) < 2" class="game-options__warning">
+      This collection needs at least two pairs to play.
     </p>
-    <ng-container *ngIf="(selectedCollection()?.image_count ?? 0) >= 2">
+    <ng-container *ngIf="(selectedCollection()?.pair_count ?? 0) >= 2">
       <div class="layout-controls">
         <div class="layout-controls__item">
           <label class="layout-controls__label" for="pair-count">Number of pairs</label>
@@ -75,14 +75,14 @@
               [value]="selectedPairs() ?? 2"
               (input)="onPairsChange($event)"
               [min]="2"
-              [max]="selectedCollection()?.image_count ?? 2"
+              [max]="selectedCollection()?.pair_count ?? 2"
             />
             <button type="button" (click)="increasePairs(1)" aria-label="Increase pairs">
               +
             </button>
           </div>
           <p class="layout-controls__hint">
-            Maximum pairs for this collection: {{ selectedCollection()?.image_count }}
+            Maximum pairs for this collection: {{ selectedCollection()?.pair_count }}
           </p>
         </div>
         <div class="layout-controls__item">

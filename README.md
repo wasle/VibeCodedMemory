@@ -24,7 +24,7 @@ The server exposes a `/health` endpoint while the game APIs are still under cons
 ### Available API Routes
 
 - `GET /collections` — enumerate playable collections, including description text and icon URL.
-- `GET /collections/{collectionId}/images` — return metadata and URLs for each image in a collection.
+- `GET /collections/{collectionId}/pairs` — return card pairs (image and markdown) for a collection.
 - `GET /collections/{collectionId}/images/{filename}` — serve the requested asset.
 
 Each collection lives under `backend/collections/<collectionId>`. Provide optional metadata via `description.json`:
