@@ -1,0 +1,22 @@
+<button
+  type="button"
+  class="tile"
+  [ngClass]="{
+    'tile--hidden': tile.state === 'hidden',
+    'tile--visible': tile.state === 'visible',
+    'tile--matched': tile.state === 'matched'
+  }"
+  [disabled]="tile.state === 'matched'"
+  (click)="handleSelect()"
+>
+  <ng-container *ngIf="isRevealed; else hiddenTile">
+    <img
+      [src]="tile.image.url"
+      [alt]="tile.image.filename"
+      loading="lazy"
+    />
+  </ng-container>
+  <ng-template #hiddenTile>
+    <span class="hidden-mark" aria-hidden="true">?</span>
+  </ng-template>
+</button>

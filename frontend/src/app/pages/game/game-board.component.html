@@ -38,27 +38,11 @@
       class="board"
       [ngStyle]="boardStyle()"
     >
-      <button
-        type="button"
+      <app-game-tile
         *ngFor="let tile of tiles(); trackBy: tileTrackBy"
-        class="tile"
-        [class.tile--hidden]="tile.state === 'hidden'"
-        [class.tile--visible]="tile.state === 'visible'"
-        [class.tile--matched]="tile.state === 'matched'"
-        (click)="onTileSelected(tile.id)"
-        [disabled]="tile.state === 'matched'"
-      >
-        <ng-container *ngIf="isRevealed(tile); else hiddenTile">
-          <img
-            [src]="tile.image.url"
-            [alt]="tile.image.filename"
-            loading="lazy"
-          />
-        </ng-container>
-        <ng-template #hiddenTile>
-          <span class="hidden-mark" aria-hidden="true">?</span>
-        </ng-template>
-      </button>
+        [tile]="tile"
+        (tileSelected)="onTileSelected($event)"
+      ></app-game-tile>
     </div>
   </ng-container>
 </div>

@@ -94,60 +94,6 @@
   gap: 1rem;
 }
 
-.tile {
-  box-sizing: border-box;
-  position: relative;
-  aspect-ratio: 1 / 1;
-  border-radius: 18px;
-  border: 3px solid transparent;
-  background: #ffffff;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
-  }
-
-  &:disabled {
-    cursor: default;
-  }
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.tile--hidden {
-  background: #d6d6d6;
-  border-color: #8f3b00;
-
-  .hidden-mark {
-    font-size: clamp(1.75rem, 1.2rem + 1.5vw, 2.5rem);
-    color: #8f3b00;
-    font-weight: 700;
-  }
-}
-
-.tile--visible {
-  border-color: #cc5500;
-}
-
-.tile--matched {
-  border-color: #aaaaaa;
-  background: #ececec;
-
-  img {
-    filter: grayscale(0.8);
-    opacity: 0.25;
-  }
-}
-
 .game-complete {
   border-radius: 16px;
   padding: 1.75rem;

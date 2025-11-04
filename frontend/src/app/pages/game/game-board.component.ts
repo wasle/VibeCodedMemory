@@ -17,11 +17,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CollectionsService } from '../../services/collections.service';
 import { GAME_CONFIG } from '../../config/game-config';
 import { GameTile, ImageAsset, TileState } from '../../models/types';
+import { GameTileComponent } from './game-tile.component';
 
 @Component({
   selector: 'app-game-board',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, GameTileComponent],
   templateUrl: './game-board.component.html',
   styleUrl: './game-board.component.scss'
 })
@@ -150,10 +151,6 @@ export class GameBoardComponent implements AfterViewInit {
       this.attempts.update((value) => value + 1);
       this.evaluateRevealedTiles();
     }
-  }
-
-  protected isRevealed(tile: GameTile): boolean {
-    return tile.state === 'visible' || tile.state === 'matched';
   }
 
   private startTimer(): void {
