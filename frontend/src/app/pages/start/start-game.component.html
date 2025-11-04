@@ -61,28 +61,61 @@
     <p *ngIf="(selectedCollection()?.image_count ?? 0) < 2" class="game-options__warning">
       This collection needs at least two images to play.
     </p>
-    <div class="pairs-control" *ngIf="(selectedCollection()?.image_count ?? 0) >= 2">
-      <label class="pairs-control__label" for="pair-count">Number of pairs</label>
-      <div class="pairs-control__inputs">
-        <button type="button" (click)="increasePairs(-1)" aria-label="Decrease pairs">
-          &minus;
-        </button>
-        <input
-          id="pair-count"
-          type="number"
-          [value]="selectedPairs() ?? 2"
-          (input)="onPairsChange($event)"
-          [min]="2"
-          [max]="selectedCollection()?.image_count ?? 2"
-        />
-        <button type="button" (click)="increasePairs(1)" aria-label="Increase pairs">
-          +
-        </button>
+    <ng-container *ngIf="(selectedCollection()?.image_count ?? 0) >= 2">
+      <div class="layout-controls">
+        <div class="layout-controls__item">
+          <label class="layout-controls__label" for="pair-count">Number of pairs</label>
+          <div class="layout-controls__inputs">
+            <button type="button" (click)="increasePairs(-1)" aria-label="Decrease pairs">
+              &minus;
+            </button>
+            <input
+              id="pair-count"
+              type="number"
+              [value]="selectedPairs() ?? 2"
+              (input)="onPairsChange($event)"
+              [min]="2"
+              [max]="selectedCollection()?.image_count ?? 2"
+            />
+            <button type="button" (click)="increasePairs(1)" aria-label="Increase pairs">
+              +
+            </button>
+          </div>
+          <p class="layout-controls__hint">
+            Maximum pairs for this collection: {{ selectedCollection()?.image_count }}
+          </p>
+        </div>
+        <div class="layout-controls__item">
+          <label class="layout-controls__label" for="column-count">Columns</label>
+          <div class="layout-controls__inputs">
+            <button type="button" (click)="increaseColumns(-1)" aria-label="Decrease columns">
+              &minus;
+            </button>
+            <input
+              id="column-count"
+              type="number"
+              [value]="selectedColumns() ?? 2"
+              (input)="onColumnsChange($event)"
+              [min]="2"
+              [max]="(selectedPairs() ?? 0) * 2"
+            />
+            <button type="button" (click)="increaseColumns(1)" aria-label="Increase columns">
+              +
+            </button>
+          </div>
+          <p class="layout-controls__hint">
+            Total tiles: {{ totalTiles() }}
+          </p>
+        </div>
       </div>
-      <p class="pairs-control__hint">
-        Maximum pairs for this collection: {{ selectedCollection()?.image_count }}
+      <p
+        class="layout-summary"
+        *ngIf="(selectedColumns() ?? 0) > 0 && (calculatedRows() ?? 0) > 0"
+      >
+        Board layout: {{ selectedColumns() ?? 0 }} columns × {{ calculatedRows() }}
+        {{ calculatedRows() === 1 ? 'row' : 'rows' }}
       </p>
-    </div>
+    </ng-container>
     <button
       type="button"
       class="start-button"

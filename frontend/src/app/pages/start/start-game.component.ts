@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CollectionsService } from '../../services/collections.service';
+import { GAME_CONFIG } from '../../config/game-config';
 import { CollectionSummary } from '../../models/types';
 
 @Component({
@@ -29,11 +30,27 @@ export class StartGameComponent {
   protected readonly collections = signal<CollectionSummary[]>([]);
   protected readonly selectedCollection = signal<CollectionSummary | null>(null);
   protected readonly selectedPairs = signal<number | null>(null);
+  protected readonly selectedColumns = signal<number | null>(null);
 
   protected readonly canStart = computed(() => {
     const collection = this.selectedCollection();
     const pairs = this.selectedPairs();
-    return !!collection && collection.image_count >= 2 && !!pairs;
+    const columns = this.selectedColumns();
+    return !!collection && collection.image_count >= 2 && !!pairs && !!columns;
+  });
+
+  protected readonly totalTiles = computed(() => {
+    const pairs = this.selectedPairs();
+    return pairs ? pairs * 2 : 0;
+  });
+
+  protected readonly calculatedRows = computed(() => {
+    const tiles = this.totalTiles();
+    const columns = this.selectedColumns();
+    if (!columns || columns <= 0 || tiles <= 0) {
+      return 0;
+    }
+    return Math.ceil(tiles / columns);
   });
 
   constructor() {
@@ -48,14 +65,23 @@ export class StartGameComponent {
   }
 
   protected selectCollection(collection: CollectionSummary): void {
+    const previousSelection = this.selectedCollection();
     this.selectedCollection.set(collection);
     if (collection.image_count < 2) {
       this.selectedPairs.set(null);
+      this.selectedColumns.set(null);
       return;
     }
-    const currentPairs = this.selectedPairs() ?? 2;
+    const currentPairs =
+      previousSelection?.id === collection.id && this.selectedPairs() !== null
+        ? this.selectedPairs()!
+        : this.defaultPairs(collection.image_count);
     const pairs = this.clampPairs(currentPairs, collection.image_count);
     this.selectedPairs.set(pairs);
+    if (!previousSelection || previousSelection.id !== collection.id) {
+      this.selectedColumns.set(null);
+    }
+    this.ensureColumnsAreValid(pairs);
   }
 
   protected onPairsChange(event: Event): void {
@@ -76,6 +102,7 @@ export class StartGameComponent {
 
     const pairs = this.clampPairs(numericValue, collection.image_count);
     this.selectedPairs.set(pairs);
+    this.ensureColumnsAreValid(pairs);
   }
 
   protected increasePairs(step: number): void {
@@ -87,18 +114,51 @@ export class StartGameComponent {
     const current = this.selectedPairs() ?? 2;
     const pairs = this.clampPairs(current + step, collection.image_count);
     this.selectedPairs.set(pairs);
+    this.ensureColumnsAreValid(pairs);
+  }
+
+  protected onColumnsChange(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    if (!target) {
+      return;
+    }
+    const collection = this.selectedCollection();
+    const pairs = this.selectedPairs();
+    if (!collection || !pairs) {
+      return;
+    }
+
+    const rawValue = target.value;
+    const numericValue = Number(rawValue);
+    if (Number.isNaN(numericValue)) {
+      return;
+    }
+
+    const columns = this.clampColumns(numericValue, pairs);
+    this.selectedColumns.set(columns);
+  }
+
+  protected increaseColumns(step: number): void {
+    const pairs = this.selectedPairs();
+    if (!pairs) {
+      return;
+    }
+    const current = this.selectedColumns() ?? this.defaultColumns(pairs);
+    const columns = this.clampColumns(current + step, pairs);
+    this.selectedColumns.set(columns);
   }
 
   protected startGame(): void {
     const collection = this.selectedCollection();
     const pairs = this.selectedPairs();
+    const columns = this.selectedColumns();
 
-    if (!collection || !pairs) {
+    if (!collection || !pairs || !columns) {
       return;
     }
 
     this.router.navigate(['/play', collection.id], {
-      queryParams: { pairs }
+      queryParams: { pairs, columns }
     });
   }
 
@@ -134,5 +194,28 @@ export class StartGameComponent {
     const safeMax = Math.max(2, Math.floor(maxPairs));
     const safeValue = Math.floor(value);
     return Math.min(Math.max(safeValue, 2), safeMax);
+  }
+
+  private defaultPairs(maxPairs: number): number {
+    const playableMax = Math.max(2, Math.floor(maxPairs));
+    return Math.min(16, playableMax);
+  }
+
+  private clampColumns(value: number, pairs: number): number {
+    const totalTiles = Math.max(2, pairs * 2);
+    const minColumns = 2;
+    const safeValue = Math.floor(value);
+    const maxColumns = Math.max(minColumns, totalTiles);
+    return Math.min(Math.max(safeValue, minColumns), maxColumns);
+  }
+
+  private defaultColumns(pairs: number): number {
+    return this.clampColumns(GAME_CONFIG.defaultTileColumns, pairs);
+  }
+
+  private ensureColumnsAreValid(pairs: number): void {
+    const current = this.selectedColumns();
+    const next = this.clampColumns(current ?? this.defaultColumns(pairs), pairs);
+    this.selectedColumns.set(next);
   }
 }

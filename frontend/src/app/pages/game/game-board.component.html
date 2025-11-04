@@ -24,8 +24,9 @@
 
   <ng-container *ngIf="!loading() && !error()">
     <div
+      #boardContainer
       class="board"
-      [style.gridTemplateColumns]="'repeat(' + columns + ', minmax(0, 1fr))'"
+      [ngStyle]="boardStyle()"
     >
       <button
         type="button"

@@ -18,5 +18,5 @@ const windowConfig = windowWithConfig?.__APP_CONFIG__ ?? {};
 
 export const GAME_CONFIG: GameConfig = {
   apiServerUrl: windowConfig.apiServerUrl ?? 'http://localhost:8000',
-  defaultTileColumns: windowConfig.defaultTileColumns ?? 6
+  defaultTileColumns: windowConfig.defaultTileColumns ?? 10
 };
