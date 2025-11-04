@@ -53,6 +53,14 @@ export class StartGameComponent {
     return Math.ceil(tiles / columns);
   });
 
+  protected readonly previewTiles = computed(() => {
+    const total = this.totalTiles();
+    if (!total) {
+      return [];
+    }
+    return Array.from({ length: total }, (_, index) => index);
+  });
+
   constructor() {
     this.loadCollections();
   }
@@ -164,6 +172,10 @@ export class StartGameComponent {
 
   protected trackByCollectionId(_: number, collection: CollectionSummary): string {
     return collection.id;
+  }
+
+  protected trackByPreviewIndex(_: number, index: number): number {
+    return index;
   }
 
   private loadCollections(): void {

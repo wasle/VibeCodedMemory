@@ -242,6 +242,29 @@
   color: #555;
 }
 
+.layout-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.layout-preview__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.layout-preview__grid {
+  display: grid;
+  gap: 4px;
+}
+
+.layout-preview__cell {
+  width: 20px;
+  aspect-ratio: 1 / 1;
+  background: #ececec;
+  border: 1px solid #cc5500;
+}
+
 .start-button {
   align-self: flex-start;
   padding: 0.75rem 1.75rem;

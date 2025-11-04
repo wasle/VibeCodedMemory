@@ -115,15 +115,30 @@
         Board layout: {{ selectedColumns() ?? 0 }} columns × {{ calculatedRows() }}
         {{ calculatedRows() === 1 ? 'row' : 'rows' }}
       </p>
+      <button
+        type="button"
+        class="start-button"
+        [disabled]="!canStart()"
+        (click)="startGame()"
+      >
+        Start game with {{ selectedPairs() ?? 0 }}
+        {{ (selectedPairs() ?? 0) === 1 ? 'pair' : 'pairs' }}
+      </button>
+      <div
+        class="layout-preview"
+        *ngIf="previewTiles().length > 0 && (selectedColumns() ?? 0) > 0"
+      >
+        <span class="layout-preview__label">Preview</span>
+        <div
+          class="layout-preview__grid"
+          [style.gridTemplateColumns]="'repeat(' + (selectedColumns() ?? 0) + ', 20px)'"
+        >
+          <span
+            class="layout-preview__cell"
+            *ngFor="let tile of previewTiles(); trackBy: trackByPreviewIndex"
+          ></span>
+        </div>
+      </div>
     </ng-container>
-    <button
-      type="button"
-      class="start-button"
-      [disabled]="!canStart()"
-      (click)="startGame()"
-    >
-      Start game with {{ selectedPairs() ?? 0 }}
-      {{ (selectedPairs() ?? 0) === 1 ? 'pair' : 'pairs' }}
-    </button>
   </section>
 </div>
